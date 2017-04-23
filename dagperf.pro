@@ -7,10 +7,10 @@ TARGET = dagperf
 INCLUDEPATH += .
 
 # Input
-HEADERS += dagperf.h browser.h connectionwidget.h statgrapher.h filter.h
-SOURCES += main.cpp dagperf.cpp browser.cpp connectionwidget.cpp statgrapher.cpp filter.cpp
+HEADERS += dagperf.h browser.h connectionwidget.h statgrapher.h filter.h parameterboard.h
+SOURCES += main.cpp dagperf.cpp browser.cpp connectionwidget.cpp statgrapher.cpp filter.cpp parameterboard.cpp
 FORMS = browser.ui
 
 # Qt Core and Qt GUI are include by default
 QT += widgets sql charts
-CONFIG += debug
+#CONFIG += debug

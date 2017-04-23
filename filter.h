@@ -38,9 +38,6 @@ public:
     QVector<QComboBox *> comboboxes;
     QStringList types = {"pthreads", "openmp", "tbb", "task_cilkplus", "task_mth", "task_omp", "task_qth", "task_tbb"};
     */
-    QStringList task_types_0 = {"task_serial", "task_cilkplus", "task_mth", "task_omp", "task_qth", "task_tbb"};
-    QStringList task_types_1 = {"serial", "cilkplus", "mth", "omp", "qth", "tbb"};
-    QStringList dag_attrs = {"work", "t1", "delay", "nowork"};
 
     QStringList arrangedFields = {"exp", "type"};
     QStringList arrangedFieldItems[2] = { {"hooks", "dr"},

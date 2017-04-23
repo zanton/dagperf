@@ -4,6 +4,7 @@
 #include <QtWidgets>
 #include <QtCharts>
 #include "filter.h"
+#include "parameterboard.h"
 
 class StatGrapher: public QWidget
 {
@@ -44,13 +45,16 @@ private:
     Filter stdoutTableFilter;
 
     QChartView chartViewsTab0[4];
-    QChartView chartViewsTab1[2];
-    QChartView chartViewsTab2[2];
+    QChartView chartViewsTabs[4];
 
     void plotRuntimeGraph(QSqlDatabase &db, QChart *chart);
     void plotSpeedupGraph(QSqlDatabase &db, QChart *chart);
     void plotPpnBreakdownGraph(QSqlDatabase &db, QChart *chart);
     void plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart);
+
+    ParameterBoard *parameterBoards[4];
+    
+    QStringList dag_attrs = {"work", "t1", "delay", "nowork"};
 };
 
 #endif

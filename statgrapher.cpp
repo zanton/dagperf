@@ -12,6 +12,14 @@ StatGrapher::StatGrapher(QWidget *parent)
     rightLayout->setAlignment(Qt::AlignTop);
     mainLayout->addLayout(rightLayout);
 
+    /* initialize parameter boards */
+
+    {
+        parameterBoards[0] = new ParameterBoard(this, {"type", "ppn"});
+        parameterBoards[1] = new ParameterBoard(this, {"type", "ppn"});
+        parameterBoards[2] = new ParameterBoard(this, {"type"});
+        parameterBoards[3] = new ParameterBoard(this, {"ppn"});
+    }
 
     /* table name parameters */
     {
@@ -65,28 +73,120 @@ StatGrapher::StatGrapher(QWidget *parent)
         }
     }
 
-    /* tab 1: time & speedup graphs */
+    /* tab 1: time graph */
     {
-        QWidget *tab = new QWidget();
-        tabWidget->addTab(tab, "&Time && Speedup");
-        QVBoxLayout *tabLayout = new QVBoxLayout();
+        QWidget *tab = new QWidget;
+        QVBoxLayout *tabLayout = new QVBoxLayout;
+        tabWidget->addTab(tab, "&Time");
         tab->setLayout(tabLayout);
-        QSplitter *splitter = new QSplitter(Qt::Horizontal);
-        tabLayout->addWidget(splitter);
-        splitter->addWidget(&chartViewsTab1[0]);
-        splitter->addWidget(&chartViewsTab1[1]);
+        tabLayout->setContentsMargins(0, 0, 0, 0);
+
+        {
+            tabLayout->addWidget(parameterBoards[0]);
+        }
+
+        {
+            QWidget *widget = new QWidget();
+            QVBoxLayout *vbox = new QVBoxLayout();
+            QHBoxLayout *hbox = new QHBoxLayout();
+            QPushButton *button = new QPushButton("Export");
+            tabLayout->addWidget(widget);
+            widget->setLayout(vbox);
+            vbox->setContentsMargins(0, 0, 0, 0);
+            vbox->addWidget(&chartViewsTabs[0]);
+            vbox->addLayout(hbox);
+            hbox->setContentsMargins(4, 4, 4, 4);
+            hbox->addStretch(1);
+            hbox->addWidget(button);
+            button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        }
     }
 
-    /* tab 2: breakdown graphs */
+    /* tab 2: speedup graph */
+    {
+        QWidget *tab = new QWidget;
+        QVBoxLayout *tabLayout = new QVBoxLayout;
+        tabWidget->addTab(tab, "S&peedup");
+        tab->setLayout(tabLayout);
+        tabLayout->setContentsMargins(0, 0, 0, 0);
+
+        {
+            tabLayout->addWidget(parameterBoards[1]);
+        }
+
+        {
+            QWidget *widget = new QWidget();
+            QVBoxLayout *vbox = new QVBoxLayout();
+            QHBoxLayout *hbox = new QHBoxLayout();
+            QPushButton *button = new QPushButton("Export");
+            tabLayout->addWidget(widget);
+            widget->setLayout(vbox);
+            vbox->setContentsMargins(0, 0, 0, 0);
+            vbox->addWidget(&chartViewsTabs[1]);
+            vbox->addLayout(hbox);
+            hbox->setContentsMargins(4, 4, 4, 4);
+            hbox->addStretch(1);
+            hbox->addWidget(button);
+            button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        }
+    }
+
+    /* tab 3: ppn-based breakdown graph */
     {
         QWidget *tab = new QWidget();
-        tabWidget->addTab(tab, "&Breakdown");
         QVBoxLayout *tabLayout = new QVBoxLayout();
+        tabWidget->addTab(tab, "&Breakdown 1");
         tab->setLayout(tabLayout);
-        QSplitter *splitter = new QSplitter(Qt::Horizontal);
-        tabLayout->addWidget(splitter);
-        splitter->addWidget(&chartViewsTab2[0]);
-        splitter->addWidget(&chartViewsTab2[1]);
+        tabLayout->setContentsMargins(0, 0, 0, 0);
+
+        {
+            tabLayout->addWidget(parameterBoards[2]);
+        }
+
+        {
+            QWidget *widget = new QWidget();
+            QVBoxLayout *vbox = new QVBoxLayout();
+            QHBoxLayout *hbox = new QHBoxLayout();
+            QPushButton *button = new QPushButton("Export");
+            tabLayout->addWidget(widget);
+            widget->setLayout(vbox);
+            vbox->setContentsMargins(0, 0, 0, 0);
+            vbox->addWidget(&chartViewsTabs[2]);
+            vbox->addLayout(hbox);
+            hbox->setContentsMargins(4, 4, 4, 4);
+            hbox->addStretch(1);
+            hbox->addWidget(button);
+            button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        }
+    }
+
+    /* tab 4: type-based breakdown graph */
+    {
+        QWidget *tab = new QWidget();
+        QVBoxLayout *tabLayout = new QVBoxLayout();
+        tabWidget->addTab(tab, "Break&down 2");
+        tab->setLayout(tabLayout);
+        tabLayout->setContentsMargins(0, 0, 0, 0);
+
+        {
+            tabLayout->addWidget(parameterBoards[3]);
+        }
+
+        {
+            QWidget *widget = new QWidget();
+            QVBoxLayout *vbox = new QVBoxLayout();
+            QHBoxLayout *hbox = new QHBoxLayout();
+            QPushButton *button = new QPushButton("Export");
+            tabLayout->addWidget(widget);
+            widget->setLayout(vbox);
+            vbox->setContentsMargins(0, 0, 0, 0);
+            vbox->addWidget(&chartViewsTabs[3]);
+            vbox->addLayout(hbox);
+            hbox->setContentsMargins(4, 4, 4, 4);
+            hbox->addStretch(1);
+            hbox->addWidget(button);
+            button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        }
     }
 
     /* signal connections */
@@ -97,6 +197,9 @@ StatGrapher::StatGrapher(QWidget *parent)
         }
         connect(&stdoutTableFilter, SIGNAL(changed()), this, SLOT(refresh()));
         connect(tabWidget, SIGNAL(currentChanged(int)), this, SLOT(on_tabWidget_currentChanged(int)));
+        for (int i = 0; i < 4; i++) {
+            connect(parameterBoards[i], SIGNAL(selectionChanged()), this, SLOT(refresh()));
+        }
     }
 }
 
@@ -109,6 +212,10 @@ void StatGrapher::on_dbComboBoxes_currentIndexChanged(int index)
     (void) index;
     QSqlDatabase db = QSqlDatabase::database(activeDb);
     stdoutTableFilter.refresh(db, dbSelector("stdout table"));
+    parameterBoards[0]->refresh(db, dbSelector("stdout table"));
+    parameterBoards[1]->refresh(db, dbSelector("speedup table"));
+    parameterBoards[2]->refresh(db, dbSelector("dr table"));
+    parameterBoards[3]->refresh(db, dbSelector("dr table"));
     refresh();
 }
 
@@ -119,8 +226,14 @@ void StatGrapher::setActiveDb(const QString &activeDb)
 
     QStringList tables = db.tables();
     int i;
+    /* disconnect db comboboxes */
+    for (i = 0; i < dbComboBoxes.count(); i++) {
+        QComboBox *combobox = dbComboBoxes.at(i);
+        disconnect(combobox, SIGNAL(currentIndexChanged(int)), this, SLOT(on_dbComboBoxes_currentIndexChanged(int)));
+    }
 
     /* stdout/dr table */
+    i = 0;
     {
         for (int i = 0; i <= 1; i++) {
             for (int j = 0; j < dbComboBoxItems[i].count(); j++) {
@@ -161,7 +274,7 @@ void StatGrapher::setActiveDb(const QString &activeDb)
     
     /* refresh filter before making speedup table */
     Filter &filter = stdoutTableFilter;
-    filter.refresh(db, dbSelector("stdout table"));    
+    filter.refresh(db, dbSelector("stdout table"));
 
     /* serial type / task types */
     for (i = 4; i <= 5; i++) {
@@ -252,6 +365,20 @@ void StatGrapher::setActiveDb(const QString &activeDb)
         }
     }
     
+    /* refresh parameter boards after speedup table is processed */
+    {
+        parameterBoards[0]->refresh(db, dbSelector("stdout table"));
+        parameterBoards[1]->refresh(db, dbSelector("speedup table"));
+        parameterBoards[2]->refresh(db, dbSelector("dr table"));
+        parameterBoards[3]->refresh(db, dbSelector("dr table"));
+    }
+    
+    /* re-connect db comboboxes */
+    for (i = 0; i < dbComboBoxes.count(); i++) {
+        QComboBox *combobox = dbComboBoxes.at(i);
+        connect(combobox, SIGNAL(currentIndexChanged(int)), this, SLOT(on_dbComboBoxes_currentIndexChanged(int)));
+    }
+
     refresh();
 }
 
@@ -260,8 +387,9 @@ void StatGrapher::plotRuntimeGraph(QSqlDatabase &db, QChart *chart)
     QSqlQuery query = QSqlQuery(db);
     chart->removeAllSeries();
     QString table = dbSelector("stdout table");
-    Filter &filter = stdoutTableFilter;
-    const QStringList types = filter.allParameters("type");
+    ParameterBoard *filter = parameterBoards[0];
+    const QStringList types = filter->currentParameters("type");
+    const QStringList ppns = filter->currentParameters("ppn");
     QValueAxis *axis = new QValueAxis();
     axis->setMin(1);
     axis->setLabelFormat("%d");
@@ -275,18 +403,37 @@ void StatGrapher::plotRuntimeGraph(QSqlDatabase &db, QChart *chart)
         /* append conditions */
         for (int j = 0; j < record.count(); j++) {
             QString field = record.fieldName(j);
-            if (filter.dagComboBoxNames.contains(field) && field != "ppn" && field != "type") {
+            if (filter->isValidField(field) && field != "ppn" && field != "type") {
                 if (first_addition) {
                     first_addition = false;
                 } else {
                     queryString.append(" and");
                 }
                 if (field == "dr" || field == "try" || field == "collmax") {
-                    queryString.append(QString(" %1=%2").arg(field, filter.currentParameter(field)));
+                    queryString.append(QString(" %1=%2").arg(field, filter->currentParameter(field)));
                 } else {
-                    queryString.append(QString(" %1=\"%2\"").arg(field, filter.currentParameter(field)));
+                    queryString.append(QString(" %1=\"%2\"").arg(field, filter->currentParameter(field)));
                 }
             }
+        }
+        /* append ppn condition */
+        if (first_addition) {
+            first_addition = false;
+        } else {
+            queryString.append(" and");
+        }
+        bool first_ppn_addition = true;
+        for (int i = 0; i < ppns.count(); i++) {
+            if (first_ppn_addition) {
+                first_ppn_addition = false;
+                queryString.append(" (");
+            } else {
+                queryString.append(" or");
+            }
+            queryString.append(QString(" ppn=%2").arg(ppns.at(i)));
+        }
+        if (!first_ppn_addition) {
+            queryString.append(" )");
         }
         /* append type condition */
         if (first_addition) {
@@ -298,12 +445,6 @@ void StatGrapher::plotRuntimeGraph(QSqlDatabase &db, QChart *chart)
         queryString.append(QString(" order by ppn"));
         /* query */
         query.exec(queryString);
-        /*
-          query.exec(QString("select ppn,sec from o "
-          "where host=\"comet\" and platform=\"icc\" and input=\"native\" "
-          "and app=\"bodytrack\" and exp=\"hooks\" and type=\"%1\" "
-          "order by ppn").arg(type));
-        */
         if (!query.isActive()) {
             qDebug() << query.lastError().text();
         } else {
@@ -329,15 +470,17 @@ void StatGrapher::plotRuntimeGraph(QSqlDatabase &db, QChart *chart)
     chart->setAnimationOptions(QChart::NoAnimation);
     /* set max value for y axis */
     if (chart->axisY()) {
-        query.exec(QString("select max(%1) from %2 where app=\"%3\" group by app").arg(dbSelector("time field"), dbSelector("stdout table"), filter.currentParameter("app")));
+        QAbstractAxis *axisY = chart->axisY();
+        axisY->setTitleText("seconds");
+        axisY->setMin(QVariant(0));
+        query.exec(QString("select max(%1) from %2 where app=\"%3\" group by app").arg(dbSelector("time field"), dbSelector("stdout table"), filter->currentParameter("app")));
         if (!query.isActive()) {
             qDebug() << query.lastError().text();
         } else {
-            if (query.first() && chart->axisY()) {
-                chart->axisY()->setMax(query.value(0));
+            if (query.first()) {
+                axisY->setMax(query.value(0));
             }
         }
-        chart->axisY()->setTitleText("seconds");
     }
     query.finish();
 }
@@ -347,8 +490,9 @@ void StatGrapher::plotSpeedupGraph(QSqlDatabase &db, QChart *chart)
     QSqlQuery query = QSqlQuery(db);
     chart->removeAllSeries();
     QString table = dbSelector("speedup table");
-    Filter &filter = stdoutTableFilter;
-    const QStringList types = filter.allParameters("type");
+    ParameterBoard *filter = parameterBoards[1];
+    const QStringList types = filter->currentParameters("type");
+    const QStringList ppns = filter->currentParameters("ppn");
     QValueAxis *axis = new QValueAxis();
     axis->setMin(1);
     axis->setLabelFormat("%d");
@@ -361,18 +505,37 @@ void StatGrapher::plotSpeedupGraph(QSqlDatabase &db, QChart *chart)
         /* append conditions */
         for (int j = 0; j < record.count(); j++) {
             QString field = record.fieldName(j);
-            if (filter.dagComboBoxNames.contains(field) && field != "ppn" && field != "type") {
+            if (filter->isValidField(field) && field != "ppn" && field != "type") {
                 if (first_addition) {
                     first_addition = false;
                 } else {
                     queryString.append(" and");
                 }
                 if (field == "dr" || field == "try" || field == "collmax") {
-                    queryString.append(QString(" %1=%2").arg(field, filter.currentParameter(field)));
+                    queryString.append(QString(" %1=%2").arg(field, filter->currentParameter(field)));
                 } else {
-                    queryString.append(QString(" %1=\"%2\"").arg(field, filter.currentParameter(field)));
+                    queryString.append(QString(" %1=\"%2\"").arg(field, filter->currentParameter(field)));
                 }
             }
+        }
+        /* append ppn condition */
+        if (first_addition) {
+            first_addition = false;
+        } else {
+            queryString.append(" and");
+        }
+        bool first_ppn_addition = true;
+        for (int i = 0; i < ppns.count(); i++) {
+            if (first_ppn_addition) {
+                first_ppn_addition = false;
+                queryString.append(" (");
+            } else {
+                queryString.append(" or");
+            }
+            queryString.append(QString(" ppn=%2").arg(ppns.at(i)));
+        }
+        if (!first_ppn_addition) {
+            queryString.append(" )");
         }
         /* append type condition */
         if (first_addition) {
@@ -383,12 +546,6 @@ void StatGrapher::plotSpeedupGraph(QSqlDatabase &db, QChart *chart)
         queryString.append(QString(" type=\"%2\"").arg(type));
         queryString.append(QString(" order by ppn"));
         query.exec(queryString);
-        /*
-          query.exec(QString("select ppn,clocks_speedup from speedup "
-          "where host=\"comet\" and platform=\"icc\" and input=\"native\" "
-          "and app=\"bodytrack\" and exp=\"hooks\" and type=\"%1\" "
-          "order by ppn").arg(type));
-        */
         if (!query.isActive()) {
             qDebug() << query.lastError().text();
         } else {
@@ -424,26 +581,21 @@ void StatGrapher::plotPpnBreakdownGraph(QSqlDatabase &db, QChart *chart)
     QSqlQuery query = QSqlQuery(db);
     chart->removeAllSeries();
     QString table = dbSelector("dr table");
-    Filter &filter = stdoutTableFilter;
-    const QString ppn = filter.currentParameter("ppn");
+    ParameterBoard *filter = parameterBoards[2];
+    const QString ppn = filter->currentParameter("ppn");
     QStackedBarSeries *series = new QStackedBarSeries();
     QBarCategoryAxis *axis = new QBarCategoryAxis();
     axis->setTitleText("types");
     bool toAppendAxis = true;
-    for (int i = 0; i < filter.dag_attrs.count(); i++) {
-        QString attr = filter.dag_attrs.at(i);
+    for (int i = 0; i < dag_attrs.count(); i++) {
+        QString attr = dag_attrs.at(i);
         if (!db.record(table).contains(attr)) {
             continue;
         }
         QBarSet *set = new QBarSet(attr);
-        QStringList *task_types;
-        if (dbSelector("task types") == "task_mth") {
-            task_types = &filter.task_types_0;
-        } else {
-            task_types = &filter.task_types_1;
-        }
-        for (int j = 0; j < task_types->count(); j++) {
-            QString type = task_types->at(j);
+        QStringList types = filter->currentParameters("type");
+        for (int j = 0; j < types.count(); j++) {
+            QString type = types.at(j);
             QString queryString = QString("select %1 from %2 where").arg(attr, table);
             QSqlRecord record = db.record(table);
             bool first_addition = true;
@@ -451,7 +603,7 @@ void StatGrapher::plotPpnBreakdownGraph(QSqlDatabase &db, QChart *chart)
             for (int k = 0; k < record.count(); k++) {
                 QString field = record.fieldName(k);
                 /* exp is always "dr", dr is always 1, try is always 1 */
-                if (filter.dagComboBoxNames.contains(field)
+                if (filter->isValidField(field)
                     && field != "ppn" && field != "type" && field != "exp" && field != "dr" && field != "try") {
                     if (first_addition) {
                         first_addition = false;
@@ -459,9 +611,9 @@ void StatGrapher::plotPpnBreakdownGraph(QSqlDatabase &db, QChart *chart)
                         queryString.append(" and");
                     }
                     if (field == "collmax") {
-                        queryString.append(QString(" %1=%2").arg(field, filter.currentParameter(field)));
+                        queryString.append(QString(" %1=%2").arg(field, filter->currentParameter(field)));
                     } else {
-                        queryString.append(QString(" %1=\"%2\"").arg(field, filter.currentParameter(field)));
+                        queryString.append(QString(" %1=\"%2\"").arg(field, filter->currentParameter(field)));
                     }
                 }
             }
@@ -473,12 +625,6 @@ void StatGrapher::plotPpnBreakdownGraph(QSqlDatabase &db, QChart *chart)
             }
             queryString.append(QString(" type=\"%1\" and (ppn=%2 or (ppn=1 and type=\"%3\"))").arg(type, ppn, dbSelector("serial type")));
             query.exec(queryString);
-            /*
-              query.exec(QString("select %1 from d "
-              "where host=\"comet\" and platform=\"icc\" and input=\"native\" "
-              "and app=\"bodytrack\" and exp!=\"hooks\" and type=\"%2\" "
-              "and (ppn=%3 or (ppn=1 and type=\"task_serial\"))").arg(attr, type, ppn));
-            */
             if (!query.isActive()) {
                 qDebug() << query.lastError().text();
             } else {
@@ -496,23 +642,25 @@ void StatGrapher::plotPpnBreakdownGraph(QSqlDatabase &db, QChart *chart)
     }
     chart->addSeries(series);
     chart->createDefaultAxes();
-    axis->setLabelsAngle(10);
+    //axis->setLabelsAngle(10);
     chart->setAxisX(axis, series);
     chart->legend()->setAlignment(Qt::AlignTop);
     chart->setTitle("Breakdown of cumul. execution time");
     chart->setAnimationOptions(QChart::NoAnimation);
     /* set max value for y axis */
     if (chart->axisY()) {
-        query.exec(QString("select max(%1+delay+nowork) from %2 where app=\"%3\" group by app").arg(dbSelector("work field"), dbSelector("dr table"), filter.currentParameter("app")));
+        QAbstractAxis *axisY = chart->axisY();
+        ((QValueAxis *) axisY)->setTitleText("clocks");
+        ((QValueAxis *) axisY)->setLabelFormat("%.3g");
+        query.exec(QString("select max(%1+delay+nowork) from %2 where app=\"%3\" group by app").arg(dbSelector("work field"), dbSelector("dr table"), filter->currentParameter("app")));
         if (!query.isActive()) {
             qDebug() << query.lastError().text();
         } else {
             if (query.first()) {
-                chart->axisY()->setMax(query.value(0));
+                axisY->setMax(query.value(0));
             }
         }
-        ((QValueAxis *)chart->axisY())->setLabelFormat("%.3g");
-        chart->axisY()->setTitleText("clocks");
+        //((QValueAxis *) axisY)->applyNiceNumbers();
     }
     query.finish();
 }
@@ -522,30 +670,15 @@ void StatGrapher::plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart)
     QSqlQuery query = QSqlQuery(db);
     chart->removeAllSeries();
     QString table = dbSelector("dr table");
-    Filter &filter = stdoutTableFilter;
-    const QString type = filter.currentParameter("type");
-    const QStringList ppns = filter.allParameters("ppn");
-    /*
-      QStringList sorted_ppns = QStringList();
-      for (int i = 0; i < ppns.count(); i++) {
-      int j;
-      for (j = 0; j < sorted_ppns.count(); j++) {
-      if (ppns.at(i).toInt() <= sorted_ppns.at(j).toInt()) {
-      sorted_ppns.insert(j, ppns.at(i));
-      break;
-      }
-      }
-      if (j == sorted_ppns.count()) {
-      sorted_ppns.append(ppns.at(i));
-      }
-      }
-    */
+    ParameterBoard *filter = parameterBoards[3];
+    const QString type = filter->currentParameter("type");
+    const QStringList ppns = filter->currentParameters("ppn");
     QStackedBarSeries *series = new QStackedBarSeries();
     QBarCategoryAxis *axis = new QBarCategoryAxis();
     axis->setTitleText("cores");
     bool toAppendAxis = true;
-    for (int i = 0; i < filter.dag_attrs.count(); i++) {
-        QString attr = filter.dag_attrs.at(i);
+    for (int i = 0; i < dag_attrs.count(); i++) {
+        QString attr = dag_attrs.at(i);
         if (!db.record(table).contains(attr)) {
             continue;
         }
@@ -560,7 +693,7 @@ void StatGrapher::plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart)
             for (int j = 0; j < record.count(); j++) {
                 QString field = record.fieldName(j);
                 /* exp is always "dr", dr is always 1, try is always 1 */
-                if (filter.dagComboBoxNames.contains(field)
+                if (filter->isValidField(field)
                     && field != "ppn" && field != "type" && field != "exp" && field != "dr" && field != "try") {
                     if (first_addition) {
                         first_addition = false;
@@ -568,9 +701,9 @@ void StatGrapher::plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart)
                         queryString.append(" and");
                     }
                     if (field == "collmax") {
-                        queryString.append(QString(" %1=%2").arg(field, filter.currentParameter(field)));
+                        queryString.append(QString(" %1=%2").arg(field, filter->currentParameter(field)));
                     } else {
-                        queryString.append(QString(" %1=\"%2\"").arg(field, filter.currentParameter(field)));
+                        queryString.append(QString(" %1=\"%2\"").arg(field, filter->currentParameter(field)));
                     }
                 }
             }
@@ -582,12 +715,6 @@ void StatGrapher::plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart)
             }
             queryString.append(QString(" type=\"%1\" and ppn=%2").arg(type, ppn));
             query.exec(queryString);
-            /*
-              query.exec(QString("select %1 from %2 "
-              "where host=\"comet\" and platform=\"icc\" and input=\"native\" "
-              "and app=\"bodytrack\" and exp!=\"hooks\" and ppn=%3 "
-              "and type=\"%4\"").arg(attr, table, ppn, type));
-            */
             if (!query.isActive()) {
                 qDebug() << query.lastError().text();
             } else {
@@ -608,7 +735,7 @@ void StatGrapher::plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart)
             for (int j = 0; j < record.count(); j++) {
                 QString field = record.fieldName(j);
                 /* exp is always "dr", dr is always 1, try is always 1 */
-                if (filter.dagComboBoxNames.contains(field)
+                if (filter->isValidField(field)
                     && field != "ppn" && field != "type" && field != "exp" && field != "dr" && field != "try") {
                     if (first_addition) {
                         first_addition = false;
@@ -616,9 +743,9 @@ void StatGrapher::plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart)
                         queryString.append(" and");
                     }
                     if (field == "collmax") {
-                        queryString.append(QString(" %1=%2").arg(field, filter.currentParameter(field)));
+                        queryString.append(QString(" %1=%2").arg(field, filter->currentParameter(field)));
                     } else {
-                        queryString.append(QString(" %1=\"%2\"").arg(field, filter.currentParameter(field)));
+                        queryString.append(QString(" %1=\"%2\"").arg(field, filter->currentParameter(field)));
                     }
                 }
             }
@@ -630,12 +757,6 @@ void StatGrapher::plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart)
             }
             queryString.append(QString(" type=\"%1\" and ppn=%2").arg(type, ppn));
             query.exec(queryString);
-            /*
-              query.exec(QString("select %1 from d "
-              "where host=\"comet\" and platform=\"icc\" and input=\"native\" "
-              "and app=\"bodytrack\" and exp!=\"hooks\" and ppn=%2 "
-              "and type=\"%3\"").arg(attr, ppn, type));
-            */
             if (!query.isActive()) {
                 qDebug() << query.lastError().text();
             } else {
@@ -658,7 +779,7 @@ void StatGrapher::plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart)
     chart->setAnimationOptions(QChart::NoAnimation);
     /* set max value for y axis */
     if (chart->axisY()) {
-        query.exec(QString("select max(%1+delay+nowork) from %2 where app=\"%3\" group by app").arg(dbSelector("work field"), dbSelector("dr table"), filter.currentParameter("app")));
+        query.exec(QString("select max(%1+delay+nowork) from %2 where app=\"%3\" group by app").arg(dbSelector("work field"), dbSelector("dr table"), filter->currentParameter("app")));
         if (!query.isActive()) {
             qDebug() << query.lastError().text();
         } else {
@@ -679,25 +800,25 @@ void StatGrapher::refresh()
     /* time graph */
     {
         plotRuntimeGraph(db, chartViewsTab0[0].chart());
-        plotRuntimeGraph(db, chartViewsTab1[0].chart());
+        plotRuntimeGraph(db, chartViewsTabs[0].chart());
     }
     
     /* speedup graph */
     if (db.tables().contains(dbSelector("speedup table"))) {
         plotSpeedupGraph(db, chartViewsTab0[1].chart());
-        plotSpeedupGraph(db, chartViewsTab1[1].chart());
+        plotSpeedupGraph(db, chartViewsTabs[1].chart());
     }
 
     /* ppn-based breakdown graph */
     {
         plotPpnBreakdownGraph(db, chartViewsTab0[2].chart());
-        plotPpnBreakdownGraph(db, chartViewsTab2[0].chart());
+        plotPpnBreakdownGraph(db, chartViewsTabs[2].chart());
     }
 
     /* type-based breakdown graph */
     {
         plotTypeBreakdownGraph(db, chartViewsTab0[3].chart());
-        plotTypeBreakdownGraph(db, chartViewsTab2[1].chart());
+        plotTypeBreakdownGraph(db, chartViewsTabs[3].chart());
     }
 }
 
