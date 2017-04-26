@@ -13,15 +13,25 @@ class StatGrapher: public QWidget
 public:
     StatGrapher(QWidget *parent = 0);
     virtual ~StatGrapher();
+    void exportChartToPdf(int chartIndex);
 
 signals:
     void statusPosted(const QString &message);
+    void statusCleared();
 
 public slots:
     void refresh();
     void setActiveDb(const QString &activeDb);
     void on_dbComboBoxes_currentIndexChanged(int index);
     void on_tabWidget_currentChanged(int index);
+    void on_exportButton0_clicked()
+    { exportChartToPdf(0); }
+    void on_exportButton1_clicked()
+    { exportChartToPdf(1); }
+    void on_exportButton2_clicked()
+    { exportChartToPdf(2); }
+    void on_exportButton3_clicked()
+    { exportChartToPdf(3); }
     
 private:
     QString activeDb;

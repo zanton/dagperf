@@ -87,18 +87,10 @@ DAGPerf::DAGPerf(QWidget *parent, QApplication *app)
     //connect(&browser, SIGNAL(statusPosted(QString)), statusBar(), SLOT(showMessage(QString)));
     //QMetaObject::connectSlotsByName(this);
     connect(&browser, SIGNAL(statusPosted(QString)), this, SLOT(postStatus(QString)));
+    connect(&browser, SIGNAL(statusCleared()), this, SLOT(clearStatus()));
     connect(&statgrapher, SIGNAL(statusPosted(QString)), this, SLOT(postStatus(QString)));
+    connect(&statgrapher, SIGNAL(statusCleared()), this, SLOT(clearStatus()));
     connect(&browser, SIGNAL(databaseActivated(QString)), this, SLOT(on_browser_databaseActivated(QString)));
-}
-
-void DAGPerf::OnStat1Pressed()
-{
-    statusBar()->showMessage("Hello World!", 2000);
-}
-
-void DAGPerf::OnStat2Pressed()
-{
-    statusBar()->showMessage("Goodbye my love!", 2000);
 }
 
 void DAGPerf::about()

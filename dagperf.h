@@ -15,10 +15,10 @@ public:
                                                        
 public slots:
     void about();
-    void OnStat1Pressed();
-    void OnStat2Pressed();
     void postStatus(const QString &status)
     { statusBar()->showMessage(status); }
+    void clearStatus()
+    { statusBar()->clearMessage(); }
     void on_browser_databaseActivated(const QString &activeDb)
     { statgrapher.setActiveDb(activeDb); }
     

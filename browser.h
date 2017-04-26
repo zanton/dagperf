@@ -25,6 +25,7 @@ public:
     
 signals:
     void statusPosted(const QString &message);
+    void statusCleared();
     void databaseActivated(const QString &activeDb);
 
 public slots:

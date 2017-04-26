@@ -99,6 +99,7 @@ StatGrapher::StatGrapher(QWidget *parent)
             hbox->addStretch(1);
             hbox->addWidget(button);
             button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+            connect(button, &QPushButton::clicked, this, &StatGrapher::on_exportButton0_clicked);
         }
     }
 
@@ -128,6 +129,7 @@ StatGrapher::StatGrapher(QWidget *parent)
             hbox->addStretch(1);
             hbox->addWidget(button);
             button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+            connect(button, &QPushButton::clicked, this, &StatGrapher::on_exportButton1_clicked);
         }
     }
 
@@ -157,6 +159,7 @@ StatGrapher::StatGrapher(QWidget *parent)
             hbox->addStretch(1);
             hbox->addWidget(button);
             button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+            connect(button, &QPushButton::clicked, this, &StatGrapher::on_exportButton2_clicked);
         }
     }
 
@@ -186,6 +189,7 @@ StatGrapher::StatGrapher(QWidget *parent)
             hbox->addStretch(1);
             hbox->addWidget(button);
             button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+            connect(button, &QPushButton::clicked, this, &StatGrapher::on_exportButton3_clicked);
         }
     }
 
@@ -384,6 +388,7 @@ void StatGrapher::setActiveDb(const QString &activeDb)
 
 void StatGrapher::plotRuntimeGraph(QSqlDatabase &db, QChart *chart)
 {
+    emit statusPosted("plotting...");
     QSqlQuery query = QSqlQuery(db);
     chart->removeAllSeries();
     QString table = dbSelector("stdout table");
@@ -444,7 +449,9 @@ void StatGrapher::plotRuntimeGraph(QSqlDatabase &db, QChart *chart)
         queryString.append(QString(" type=\"%2\"").arg(type));
         queryString.append(QString(" order by ppn"));
         /* query */
+        emit statusPosted("plotting... query executing...");
         query.exec(queryString);
+        emit statusPosted("plotting...");
         if (!query.isActive()) {
             qDebug() << query.lastError().text();
         } else {
@@ -473,7 +480,9 @@ void StatGrapher::plotRuntimeGraph(QSqlDatabase &db, QChart *chart)
         QAbstractAxis *axisY = chart->axisY();
         axisY->setTitleText("seconds");
         axisY->setMin(QVariant(0));
+        emit statusPosted("plotting... query executing...");
         query.exec(QString("select max(%1) from %2 where app=\"%3\" group by app").arg(dbSelector("time field"), dbSelector("stdout table"), filter->currentParameter("app")));
+        emit statusPosted("plotting...");
         if (!query.isActive()) {
             qDebug() << query.lastError().text();
         } else {
@@ -481,12 +490,16 @@ void StatGrapher::plotRuntimeGraph(QSqlDatabase &db, QChart *chart)
                 axisY->setMax(query.value(0));
             }
         }
+        ((QValueAxis *) axisY)->applyNiceNumbers();
+        ((QValueAxis *) axisY)->setMinorTickCount(5);
     }
     query.finish();
+    emit statusPosted("plotting... finished.");
 }
 
 void StatGrapher::plotSpeedupGraph(QSqlDatabase &db, QChart *chart)
 {
+    emit statusPosted("plotting...");
     QSqlQuery query = QSqlQuery(db);
     chart->removeAllSeries();
     QString table = dbSelector("speedup table");
@@ -545,7 +558,9 @@ void StatGrapher::plotSpeedupGraph(QSqlDatabase &db, QChart *chart)
         }
         queryString.append(QString(" type=\"%2\"").arg(type));
         queryString.append(QString(" order by ppn"));
+        emit statusPosted("plotting... query executing...");
         query.exec(queryString);
+        emit statusPosted("plotting...");
         if (!query.isActive()) {
             qDebug() << query.lastError().text();
         } else {
@@ -569,15 +584,19 @@ void StatGrapher::plotSpeedupGraph(QSqlDatabase &db, QChart *chart)
     chart->legend()->setAlignment(Qt::AlignRight);
     chart->setAnimationOptions(QChart::NoAnimation);
     if (chart->axisY()) {
-        ((QValueAxis *)chart->axisY())->setLabelFormat("%d");
-        chart->axisY()->setTitleText("speedup");
+        QAbstractAxis *axisY = chart->axisY();
+        ((QValueAxis *) axisY)->setLabelFormat("%d");
+        axisY->setTitleText("speedup");
+        ((QValueAxis *) axisY)->setMinorTickCount(5);
     }
     chart->setTitle("Scalability");
     query.finish();
+    emit statusPosted("plotting... finished.");
 }
 
 void StatGrapher::plotPpnBreakdownGraph(QSqlDatabase &db, QChart *chart)
 {
+    emit statusPosted("plotting...");
     QSqlQuery query = QSqlQuery(db);
     chart->removeAllSeries();
     QString table = dbSelector("dr table");
@@ -624,7 +643,9 @@ void StatGrapher::plotPpnBreakdownGraph(QSqlDatabase &db, QChart *chart)
                 queryString.append(" and");
             }
             queryString.append(QString(" type=\"%1\" and (ppn=%2 or (ppn=1 and type=\"%3\"))").arg(type, ppn, dbSelector("serial type")));
+            emit statusPosted("plotting... query executing...");
             query.exec(queryString);
+            emit statusPosted("plotting...");
             if (!query.isActive()) {
                 qDebug() << query.lastError().text();
             } else {
@@ -652,7 +673,9 @@ void StatGrapher::plotPpnBreakdownGraph(QSqlDatabase &db, QChart *chart)
         QAbstractAxis *axisY = chart->axisY();
         ((QValueAxis *) axisY)->setTitleText("clocks");
         ((QValueAxis *) axisY)->setLabelFormat("%.3g");
+        emit statusPosted("plotting... query executing...");
         query.exec(QString("select max(%1+delay+nowork) from %2 where app=\"%3\" group by app").arg(dbSelector("work field"), dbSelector("dr table"), filter->currentParameter("app")));
+        emit statusPosted("plotting...");
         if (!query.isActive()) {
             qDebug() << query.lastError().text();
         } else {
@@ -661,12 +684,15 @@ void StatGrapher::plotPpnBreakdownGraph(QSqlDatabase &db, QChart *chart)
             }
         }
         //((QValueAxis *) axisY)->applyNiceNumbers();
+        ((QValueAxis *) axisY)->setMinorTickCount(5);
     }
     query.finish();
+    emit statusPosted("plotting... finished.");
 }
 
 void StatGrapher::plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart)
 {
+    emit statusPosted("plotting...");
     QSqlQuery query = QSqlQuery(db);
     chart->removeAllSeries();
     QString table = dbSelector("dr table");
@@ -714,7 +740,9 @@ void StatGrapher::plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart)
                 queryString.append(" and");
             }
             queryString.append(QString(" type=\"%1\" and ppn=%2").arg(type, ppn));
+            emit statusPosted("plotting... query executing...");
             query.exec(queryString);
+            emit statusPosted("plotting...");
             if (!query.isActive()) {
                 qDebug() << query.lastError().text();
             } else {
@@ -756,7 +784,9 @@ void StatGrapher::plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart)
                 queryString.append(" and");
             }
             queryString.append(QString(" type=\"%1\" and ppn=%2").arg(type, ppn));
+            emit statusPosted("plotting... query executing...");
             query.exec(queryString);
+            emit statusPosted("plotting...");
             if (!query.isActive()) {
                 qDebug() << query.lastError().text();
             } else {
@@ -779,18 +809,23 @@ void StatGrapher::plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart)
     chart->setAnimationOptions(QChart::NoAnimation);
     /* set max value for y axis */
     if (chart->axisY()) {
+        QAbstractAxis *axisY = chart->axisY();
+        emit statusPosted("plotting... query executing...");
         query.exec(QString("select max(%1+delay+nowork) from %2 where app=\"%3\" group by app").arg(dbSelector("work field"), dbSelector("dr table"), filter->currentParameter("app")));
+        emit statusPosted("plotting...");
         if (!query.isActive()) {
             qDebug() << query.lastError().text();
         } else {
             if (query.first()) {
-                chart->axisY()->setMax(query.value(0));
+                axisY->setMax(query.value(0));
             }
         }
-        ((QValueAxis *)chart->axisY())->setLabelFormat("%.3g");
-        chart->axisY()->setTitleText("clocks");
-        query.finish();
+        ((QValueAxis *) axisY)->setLabelFormat("%.3g");
+        ((QValueAxis *) axisY)->setMinorTickCount(5);
+        axisY->setTitleText("clocks");
     }
+    query.finish();
+    emit statusPosted("plotting... finished.");
 }
 
 void StatGrapher::refresh()
@@ -837,4 +872,20 @@ const QString StatGrapher::dbSelector(QString name) const
 void StatGrapher::on_tabWidget_currentChanged(int index)
 {
     (void) index;
+}
+
+void StatGrapher::exportChartToPdf(int chartIndex)
+{
+    QString pdfFileName = QFileDialog::getSaveFileName(this, tr("Export Chart to PDF"), QString(),
+                                                       tr("Pdf Files (*.pdf)"), 0, 0);
+    if (!pdfFileName.isEmpty()) {
+        QChartView *chartView = &chartViewsTabs[chartIndex];
+        QPdfWriter writer(pdfFileName);
+        //writer.setPageSize(QPageSize(QSizeF(100.0,100.0), QPageSize::Point, 0, QPageSize::ExactMatch));
+        //writer.setPageSize(QPageSize(QSize(100,100), 0, QPageSize::ExactMatch));
+        writer.setPageSize(QPageSize(chartView->size(), 0, QPageSize::ExactMatch));
+        QPainter painter(&writer);
+        chartView->render(&painter);
+        painter.end();
+    }    
 }
