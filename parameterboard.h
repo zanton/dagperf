@@ -16,6 +16,8 @@ public:
     const QStringList currentParameters(const QString &field) const;
     const QStringList allParameters(const QString &field) const;
     bool isValidField(const QString &field) const;
+    const QStringList getPrimaryIntFields() const
+    { return primaryIntFields; }
 
 signals:
     void selectionChanged();
@@ -27,7 +29,7 @@ public slots:
 private:
     QStringList primaryFields = {"host", "platform", "input", "exp", "dr",
                                  "malloc", "try", "collmax", "app", "type",
-                                 "ppn"};
+                                 "ppn", "dr_papi", "papi_nev", "papi_si"};
     QVector<QButtonGroup *> primaryFieldButtonGroups;
     QVector<QGroupBox *> primaryFieldGroupBoxes;
     QMap<QString, QStringList> primaryFieldArrangedValues =
@@ -37,6 +39,8 @@ private:
     QMap<QString, QVector<QAbstractButton *>> buttonMap;
 
     QStringList pluralFields;
+    
+    QStringList primaryIntFields = {"dr", "try", "collmax", "ppn", "dr_papi", "papi_nev", "papi_si"};
 };
 
 #endif

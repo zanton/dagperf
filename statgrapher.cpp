@@ -414,7 +414,7 @@ void StatGrapher::plotRuntimeGraph(QSqlDatabase &db, QChart *chart)
                 } else {
                     queryString.append(" and");
                 }
-                if (field == "dr" || field == "try" || field == "collmax") {
+                if (filter->getPrimaryIntFields().contains(field)) {
                     queryString.append(QString(" %1=%2").arg(field, filter->currentParameter(field)));
                 } else {
                     queryString.append(QString(" %1=\"%2\"").arg(field, filter->currentParameter(field)));
@@ -480,8 +480,9 @@ void StatGrapher::plotRuntimeGraph(QSqlDatabase &db, QChart *chart)
         QAbstractAxis *axisY = chart->axisY();
         axisY->setTitleText("seconds");
         axisY->setMin(QVariant(0));
+        QString queryString = QString("select max(%1) from %2 where app=\"%3\" group by app").arg(dbSelector("time field"), dbSelector("stdout table"), filter->currentParameter("app"));
         emit statusPosted("plotting... query executing...");
-        query.exec(QString("select max(%1) from %2 where app=\"%3\" group by app").arg(dbSelector("time field"), dbSelector("stdout table"), filter->currentParameter("app")));
+        query.exec(queryString);
         emit statusPosted("plotting...");
         if (!query.isActive()) {
             qDebug() << query.lastError().text();
@@ -524,7 +525,7 @@ void StatGrapher::plotSpeedupGraph(QSqlDatabase &db, QChart *chart)
                 } else {
                     queryString.append(" and");
                 }
-                if (field == "dr" || field == "try" || field == "collmax") {
+                if (filter->getPrimaryIntFields().contains(field)) {
                     queryString.append(QString(" %1=%2").arg(field, filter->currentParameter(field)));
                 } else {
                     queryString.append(QString(" %1=\"%2\"").arg(field, filter->currentParameter(field)));
@@ -629,7 +630,7 @@ void StatGrapher::plotPpnBreakdownGraph(QSqlDatabase &db, QChart *chart)
                     } else {
                         queryString.append(" and");
                     }
-                    if (field == "collmax") {
+                    if (filter->getPrimaryIntFields().contains(field)) {
                         queryString.append(QString(" %1=%2").arg(field, filter->currentParameter(field)));
                     } else {
                         queryString.append(QString(" %1=\"%2\"").arg(field, filter->currentParameter(field)));
@@ -673,8 +674,9 @@ void StatGrapher::plotPpnBreakdownGraph(QSqlDatabase &db, QChart *chart)
         QAbstractAxis *axisY = chart->axisY();
         ((QValueAxis *) axisY)->setTitleText("clocks");
         ((QValueAxis *) axisY)->setLabelFormat("%.3g");
+        QString queryString = QString("select max(%1+delay+nowork) from %2 where app=\"%3\" group by app").arg(dbSelector("work field"), dbSelector("dr table"), filter->currentParameter("app"));
         emit statusPosted("plotting... query executing...");
-        query.exec(QString("select max(%1+delay+nowork) from %2 where app=\"%3\" group by app").arg(dbSelector("work field"), dbSelector("dr table"), filter->currentParameter("app")));
+        query.exec(queryString);
         emit statusPosted("plotting...");
         if (!query.isActive()) {
             qDebug() << query.lastError().text();
@@ -726,7 +728,7 @@ void StatGrapher::plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart)
                     } else {
                         queryString.append(" and");
                     }
-                    if (field == "collmax") {
+                    if (filter->getPrimaryIntFields().contains(field)) {
                         queryString.append(QString(" %1=%2").arg(field, filter->currentParameter(field)));
                     } else {
                         queryString.append(QString(" %1=\"%2\"").arg(field, filter->currentParameter(field)));
@@ -770,7 +772,7 @@ void StatGrapher::plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart)
                     } else {
                         queryString.append(" and");
                     }
-                    if (field == "collmax") {
+                    if (filter->getPrimaryIntFields().contains(field)) {
                         queryString.append(QString(" %1=%2").arg(field, filter->currentParameter(field)));
                     } else {
                         queryString.append(QString(" %1=\"%2\"").arg(field, filter->currentParameter(field)));
@@ -810,8 +812,9 @@ void StatGrapher::plotTypeBreakdownGraph(QSqlDatabase &db, QChart *chart)
     /* set max value for y axis */
     if (chart->axisY()) {
         QAbstractAxis *axisY = chart->axisY();
+        QString queryString = QString("select max(%1+delay+nowork) from %2 where app=\"%3\" group by app").arg(dbSelector("work field"), dbSelector("dr table"), filter->currentParameter("app"));
         emit statusPosted("plotting... query executing...");
-        query.exec(QString("select max(%1+delay+nowork) from %2 where app=\"%3\" group by app").arg(dbSelector("work field"), dbSelector("dr table"), filter->currentParameter("app")));
+        query.exec(queryString);
         emit statusPosted("plotting...");
         if (!query.isActive()) {
             qDebug() << query.lastError().text();
